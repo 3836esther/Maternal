@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Profile | Maternal Health System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
+        <a href="services.html">Services</a>
+        <a href="logout.php">Logout</a>
+    </nav>
+
+    <div class="container">
+        <h2>My Profile</h2>
+        <form id="profile-form">
+            <input type="text" id="profile-username" placeholder="Full Name" required>
+            <input type="email" id="profile-email" disabled>
+            <input type="tel" id="profile-phone" placeholder="Phone Number" required>
+            <textarea id="profile-medical-history" placeholder="Medical History" required></textarea>
+            <button type="submit">Update Profile</button>
+        </form>
+    </div>
+
+    <script src="js/profile.js"></script>
+</body>
+</html>

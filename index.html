@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home | Medina Hospital - Maternal Health System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root {
+      --primary: #007B5E;
+      --accent: #ffcc00;
+      --light-bg: #f9f9f9;
+      --hero-bg: linear-gradient(to right, #cdeae8, #e9f7f6);
+      --font-dark: #333;
+      --font-light: #fff;
+      --card-bg: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--light-bg);
+      color: var(--font-dark);
+    }
+
+    nav {
+      background-color: var(--primary);
+      padding: 15px 25px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    nav a {
+      color: var(--font-light);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    nav a:hover {
+      background-color: var(--accent);
+      color: #000;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 80px 20px;
+      background: var(--hero-bg);
+    }
+
+    .hero h1 {
+      color: var(--primary);
+      font-size: 36px;
+      margin-bottom: 15px;
+    }
+
+    .hero p {
+      font-size: 20px;
+      color: #444;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 30px;
+      background-color: var(--primary);
+      color: white;
+      padding: 14px 28px;
+      font-size: 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #006349;
+    }
+
+    .features {
+      padding: 60px 30px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      background-color: #fff;
+    }
+
+    .feature {
+      background-color: var(--card-bg);
+      padding: 30px;
+      width: 300px;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
+      text-align: center;
+    }
+
+    .feature:hover {
+      transform: translateY(-8px);
+    }
+
+    .feature h3 {
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .testimonials {
+      background-color: #e6fff5;
+      padding: 60px 30px;
+      text-align: center;
+    }
+
+    .testimonials h2 {
+      font-size: 28px;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+
+    .testimonial {
+      font-style: italic;
+      color: #444;
+      margin: 0 auto;
+      max-width: 650px;
+      font-size: 18px;
+      animation: fade 6s infinite;
+    }
+
+    @keyframes fade {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    footer {
+      background-color: var(--primary);
+      color: var(--font-light);
+      text-align: center;
+      padding: 25px 20px;
+      margin-top: 40px;
+    }
+
+    footer p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    @media screen and (max-width: 768px) {
+      nav {
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .features {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="Services.php">Services</a>
+    <a href="contact.html">Contact</a>
+
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <h1>Welcome to Medina Hospital Maternal Health Information System</h1>
+    <p>Empowering mothers with accessible, secure, and reliable maternal care services.</p>
+    <a href="Services.php" class="btn">Explore Services</a>
+  </header>
+
+  <!-- Feature Highlights -->
+  <section class="features">
+    <div class="feature">
+      <h3>24/7 Support</h3>
+      <p>Always available to respond to your maternal health needs with timely assistance.</p>
+    </div>
+    <div class="feature">
+      <h3>Skilled Staff</h3>
+      <p>Our qualified midwives and doctors offer expert, compassionate care for you and your baby.</p>
+    </div>
+    <div class="feature">
+      <h3>Secure Records</h3>
+      <p>We ensure your health records are safely stored, private, and easily accessible when needed.</p>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section class="testimonials">
+    <h2>What Mothers Are Saying</h2>
+    <div class="testimonial" id="testimonial">
+      “Medina Hospital provided excellent care during my pregnancy. The system made it easy to follow up with my appointments.”
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2025 Medina Hospital. All rights reserved.</p>
+    <p>Email: info@medinahospital.org | Phone: +254 712 345 678</p>
+  </footer>
+
+  <!-- Testimonials Script -->
+  <script>
+    const testimonials = [
+      "“Medina Hospital provided excellent care during my pregnancy. The system made it easy to follow up with my appointments.”",
+      "“I loved how quick and professional the registration and consultation process was!”",
+      "“The nurses and staff are very supportive and friendly. Highly recommended!”"
+    ];
+
+    let index = 0;
+    const testimonialElement = document.getElementById("testimonial");
+
+    setInterval(() => {
+      index = (index + 1) % testimonials.length;
+      testimonialElement.textContent = testimonials[index];
+    }, 6000);
+  </script>
+
+</body>
+</html>

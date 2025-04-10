@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services | Maternal Health System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="Services.php">Services</a>
+        <a href="contact.html">Contact</a>
+        <a href="notification.php">Notification</a>
+      
+
+    <!-- Services Section -->
+    <div class="container">
+        <h2>Our Services</h2>
+        <ul>
+            <li>Antenatal Care & Checkups</li>
+            <li>Postnatal Care</li>
+            <li>Family Planning & Counseling</li>
+            <li>Pregnancy Ultrasound & Scans</li>
+            <li>Nutrition & Diet Counseling</li>
+            <li>Childbirth Classes</li>
+            <li>Emergency Maternal Services</li>
+        </ul>
+
+        <!-- Appointment Booking Form -->
+        <h3>Book an Appointment</h3>
+        <form id="appointment-form">
+            <input type="text" id="full-name" placeholder="Full Name" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="tel" id="phone" placeholder="Phone Number" pattern="[0-9]{10}" required>
+            
+            <select id="service">
+                <option value="" disabled selected>Select a Service</option>
+                <option value="Antenatal Care">Antenatal Care</option>
+                <option value="Postnatal Care">Postnatal Care</option>
+                <option value="Family Planning">Family Planning</option>
+                <option value="Ultrasound">Pregnancy Ultrasound</option>
+                <option value="Nutrition">Nutrition Counseling</option>
+            </select>
+
+            <select id="doctor">
+                <option value="" disabled selected>Select Doctor in Charge</option>
+                <option value="Terry">Terry</option>
+                <option value="John">John</option>
+                <option value="Leah">Leah</option>
+            </select>
+
+            <select id="checkup-type">
+                <option value="" disabled selected>Select Type of Checkup</option>
+                <option value="Routine Antenatal Checkup">Routine Antenatal Checkup</option>
+                <option value="High-Risk Pregnancy Consultation">High-Risk Pregnancy Consultation</option>
+                <option value="Postnatal Recovery Checkup">Postnatal Recovery Checkup</option>
+                <option value="Newborn Checkup">Newborn Checkup</option>
+            </select>
+
+            <input type="date" id="appointment-date" required>
+            <button type="submit">Book Appointment</button>
+        </form>
+    </div>
+
+    <script src="js/Services.js"></script>
+
+</body>
+</html>

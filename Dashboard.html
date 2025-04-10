@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard | Maternal Health System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="about.html">About</a>
+  <a href="services.html">Services</a>
+  <a href="contact.html">Contact</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="logout.php">Logout</a>
+</nav>
+
+<div class="container">
+  <h2>Welcome to Your Dashboard</h2>
+
+  <!-- Profile Section -->
+  <div id="profile-section">
+    <h3>Your Profile</h3>
+    <form id="profile-form">
+      <input type="text" id="profile-name" placeholder="Full Name" required>
+      <input type="email" id="profile-email" placeholder="Email" readonly>
+      <input type="tel" id="profile-phone" placeholder="Phone Number" required>
+      <textarea id="profile-medical-history" placeholder="Medical History"></textarea>
+      <button type="submit">Update Profile</button>
+    </form>
+
+    <p id="profile-status"></p>
+  </div>
+
+  <!-- Reminders Section -->
+  <div id="reminders">
+    <h3>Reminders</h3>
+    <ul id="reminder-list"></ul>
+  </div>
+</div>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>
