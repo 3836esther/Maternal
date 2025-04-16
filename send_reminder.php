@@ -1,5 +1,13 @@
 <?php
-// Handle form submission
+session_start();
+
+// TEMPORARY: For testing purposes. Remove once login system is working.
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['user_id'] = 1; // Use a valid user_id from your `users` table
+}
+
+$status = "";
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $conn = new mysqli("localhost", "root", "", "maternal");
 
@@ -9,13 +17,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $patient_name = $conn->real_escape_string($_POST['patient_name']);
     $message = $conn->real_escape_string($_POST['message']);
+    $email = isset($_POST['email']) ? $conn->real_escape_string($_POST['email']) : null;
+    $user_id = $_SESSION['user_id'];
 
-    $sql = "INSERT INTO reminders (patient_name, message) VALUES ('$patient_name', '$message')";
+    // Insert the reminder into the database
+    $sql = "INSERT INTO reminders (patient_name, message, is_read, user_id, email)
+            VALUES ('$patient_name', '$message', 0, '$user_id', " . ($email ? "'$email'" : "''") . ")";
 
     if ($conn->query($sql) === TRUE) {
-        $status = "Reminder sent successfully!";
+        $status = "✅ Reminder sent successfully!";
     } else {
-        $status = "Error: " . $conn->error;
+        $status = "❌ Error: " . $conn->error;
     }
 
     $conn->close();
@@ -33,48 +45,61 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             padding: 30px;
             max-width: 600px;
             margin: auto;
+            background-color: #f5f9f7;
         }
 
         h2 {
-            color: #333;
+            color: #2f855a;
         }
 
         form {
-            background: #f9f9f9;
-            padding: 20px;
+            background: #ffffff;
+            padding: 25px;
             border: 1px solid #ddd;
-            border-radius: 8px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
         input[type="text"],
+        input[type="email"],
         textarea {
             width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 16px;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-size: 15px;
         }
 
         button {
-            background: #28a745;
+            background: #2f855a;
             color: white;
-            padding: 10px 18px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #276749;
         }
 
         .status {
-            margin-top: 15px;
+            margin-top: 20px;
             font-weight: bold;
-            color: green;
+            color: #2f855a;
+        }
+
+        .status.error {
+            color: #e53e3e;
         }
     </style>
 </head>
 <body>
 
-<h2>Send Medication Reminder to Patient</h2>
+<h2>Send Medication Reminder</h2>
 
 <form method="POST" action="">
     <label>Patient Name:</label>
@@ -83,11 +108,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <label>Reminder Message:</label>
     <textarea name="message" rows="4" required></textarea>
 
+    <label>Email (Optional):</label>
+    <input type="email" name="email" placeholder="Patient's Email">
+
     <button type="submit">Send Reminder</button>
 </form>
 
 <?php if (!empty($status)) : ?>
-    <div class="status"><?php echo $status; ?></div>
+    <div class="status <?php echo strpos($status, 'Error') !== false ? 'error' : ''; ?>">
+        <?php echo $status; ?>
+    </div>
 <?php endif; ?>
 
 </body>

@@ -1,35 +1,46 @@
 <?php
-session_start(); // Start the session to manage user authentication
+session_start();
+
+// Set session timeout duration (in seconds)
+$timeoutDuration = 600; // 10 minutes
+
+// Check if user is logged in
+if (!isset($_SESSION['email'])) {
+    $_SESSION['login_reminder'] = "Please log in to access the services page.";
+    header("Location: login.php");
+    exit();
+}
+
+// Check for session timeout
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY']) > $timeoutDuration) {
+    session_unset();
+    session_destroy();
+    session_start();
+    $_SESSION['login_reminder'] = "Session expired due to inactivity. Please log in again.";
+    header("Location: login.php");
+    exit();
+}
+$_SESSION['LAST_ACTIVITY'] = time(); // Update last activity time
 
 $message = "";
 
-// Check if the user is logged in, otherwise redirect to login page
-if (!isset($_SESSION['email'])) {
-    header("Location: login.php"); // Redirect to login if not logged in
-    exit(); // Stop the script from running
-}
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        // Database connection
         $conn = new PDO("mysql:host=localhost;dbname=maternal", "root", "");
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Get data from the form
         $full_name = $_POST['full_name'];
-        $email = $_SESSION['email']; // Use the session email instead of POST (since it's already logged in)
+        $email = $_SESSION['email'];
         $phone = $_POST['phone'];
         $service = $_POST['service'];
         $doctor = $_POST['doctor'];
         $checkup = $_POST['checkup_type'];
         $appointment_date = $_POST['appointment_date'];
 
-        // Prepare the SQL statement
         $stmt = $conn->prepare("INSERT INTO appointments 
             (full_name, email, phone, service, doctor, checkup_type, appointment_date) 
             VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-        // Execute the statement
         if ($stmt->execute([$full_name, $email, $phone, $service, $doctor, $checkup, $appointment_date])) {
             echo "<script>alert('Appointment submitted successfully! You can check your status later.'); window.location.href='view_appointments.php?email=$email';</script>";
         } else {
@@ -50,32 +61,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <nav>
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
+        <a href="home.php">home</a>
         <a href="services.php">Services</a>
-        <a href="contact.html">Contact</a>
-       
-        
-        <!-- Logout Button -->
-        <a href="logout.php" class="logout-button">Logout</a>
-
+        <a href="health_tips.php">Health Tips</a>
+        <a href="community_support.php">Community Support</a>
         <a href="notification.php">🔔</a>
+        <a href="logout.php" class="logout-button">Logout</a>
     </nav>
-    
 
     <div class="container">
         <h2>Book an Appointment</h2>
         <?= $message ?>
-
-        <!-- Display the logged-in user's email with a greeting -->
         <p>Welcome, <?= htmlspecialchars($_SESSION['email']) ?>!</p>
 
         <form method="POST">
             <input type="text" name="full_name" placeholder="Full Name" required>
-            
-            <!-- Email field is now read-only, as it should not be modified -->
             <input type="email" name="email" value="<?= $_SESSION['email'] ?>" readonly required>
-
             <input type="tel" name="phone" placeholder="Phone Number" required>
 
             <select name="service" required>
@@ -106,7 +107,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <button type="submit">Book Now</button>
         </form>
 
-        <!-- Link to view appointments -->
         <div class="view-appointments">
             <a href="view_appointments.php?email=<?= urlencode($_SESSION['email']) ?>" class="button">View My Appointments</a>
         </div>

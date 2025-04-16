@@ -1,197 +1,241 @@
 <?php
-// Connect to database
-$conn = new mysqli("localhost", "root", "", "maternal");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php?message=Please log in to view your reminders");
+    exit();
 }
 
-// Fetch unread reminders
-$sql = "SELECT * FROM reminders WHERE is_read = 0 ORDER BY created_at DESC";
-$result = $conn->query($sql);
+$userId = $_SESSION['user_id'];
 $reminders = [];
+$filterKeyword = $_GET['search'] ?? '';
+$filterDate = $_GET['date'] ?? '';
+$preferences = ['medication' => true, 'appointment' => true, 'general' => true]; // default all true
 
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $reminders[] = $row;
+try {
+    $conn = new PDO("mysql:host=localhost;dbname=maternal", "root", "");
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Load user preferences if exist
+    $prefStmt = $conn->prepare("SELECT pref_type FROM user_preferences WHERE user_id = ?");
+    $prefStmt->execute([$userId]);
+    $prefs = $prefStmt->fetchAll(PDO::FETCH_COLUMN);
+    if ($prefs) {
+        // Set all to false, then update based on database
+        $preferences = ['medication' => false, 'appointment' => false, 'general' => false];
+        foreach ($prefs as $pref) {
+            if (isset($preferences[$pref])) {
+                $preferences[$pref] = true;
+            }
+        }
     }
+
+    // Delete old reminders
+    $conn->prepare("DELETE FROM reminders WHERE created_at < NOW() - INTERVAL 30 DAY")->execute();
+
+    // Count unread
+    $unreadStmt = $conn->prepare("SELECT COUNT(*) FROM reminders WHERE user_id = ? AND status = 'unread'");
+    $unreadStmt->execute([$userId]);
+    $unreadCount = $unreadStmt->fetchColumn();
+
+    // Build reminders query with filters
+    $query = "SELECT * FROM reminders WHERE user_id = :user_id";
+    if (!empty($filterKeyword)) {
+        $query .= " AND message LIKE :keyword";
+    }
+    if (!empty($filterDate)) {
+        $query .= " AND DATE(created_at) = :filterDate";
+    }
+
+    // Apply preferences filtering
+    $prefTypes = array_keys(array_filter($preferences));
+    if (count($prefTypes) > 0) {
+        $inQuery = implode(',', array_fill(0, count($prefTypes), '?'));
+        $query .= " AND type IN ($inQuery)";
+    }
+
+    $query .= " ORDER BY created_at DESC";
+
+    $stmt = $conn->prepare($query);
+    $stmt->bindValue(':user_id', $userId);
+    $i = 1;
+    if (!empty($filterKeyword)) $stmt->bindValue(':keyword', '%' . $filterKeyword . '%');
+    if (!empty($filterDate)) $stmt->bindValue(':filterDate', $filterDate);
+    foreach ($prefTypes as $type) {
+        $stmt->bindValue($i++, $type);
+    }
+    $stmt->execute();
+    $reminders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Mark all as read
+    $conn->prepare("UPDATE reminders SET status = 'read' WHERE user_id = ?")->execute([$userId]);
+
+} catch (PDOException $e) {
+    die("Database error: " . $e->getMessage());
 }
-$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Medication Notifications</title>
+    <title>Your Notifications</title>
     <style>
+        /* same styles as before */
         body {
             font-family: 'Segoe UI', sans-serif;
-            background-color: #f4fdfb;
-            margin: 0;
-            padding: 0;
+            background: #f4f6f9;
+            padding: 20px;
         }
 
         .header {
-            background-color: #2f855a;
-            color: white;
-            padding: 15px 25px;
-            font-size: 22px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        #notification-icon {
+        .bell {
+            font-size: 24px;
             position: relative;
-            font-size: 26px;
-            cursor: pointer;
-            background-color: #38a169;
-            padding: 12px;
-            border-radius: 50%;
+        }
+
+        .count {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            background: red;
             color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 50%;
         }
 
-        #notification-popup {
-            display: none;
-            position: absolute;
-            top: 65px;
-            right: 25px;
-            background-color: white;
-            width: 350px;
-            max-height: 400px;
-            overflow-y: auto;
-            border-radius: 10px;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            z-index: 999;
-        }
-
-        .reminder-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .reminder-item:hover {
-            background-color: #f0fff4;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background-color: #ffffff;
-            padding: 25px;
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
             border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            position: relative;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
         }
 
-        .modal h3 {
-            margin-top: 0;
-            color: #2f855a;
-        }
-
-        .modal p {
-            font-size: 16px;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 20px;
-            color: #aaa;
-            cursor: pointer;
-        }
-
-        .close-btn:hover {
-            color: #ff5722;
-        }
-
-        .no-reminders {
-            padding: 15px;
-            color: #888;
+        h2 {
             text-align: center;
+        }
+
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        input[type="text"],
+        input[type="date"] {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .reminder {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            position: relative;
+            border-left: 5px solid #007bff;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+
+        .delete-btn {
+            float: right;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .none {
+            text-align: center;
+            font-style: italic;
+            color: #999;
+        }
+
+        .preferences {
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .preferences h4 {
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    Medication Reminders
-    <div id="notification-icon" onclick="togglePopup()">🔔</div>
-</div>
-
-<!-- Notification Popup -->
-<div id="notification-popup">
-    <?php if (count($reminders) > 0): ?>
-        <?php foreach ($reminders as $reminder): ?>
-            <div class="reminder-item" onclick="openModal('<?php echo $reminder['id']; ?>', '<?php echo htmlspecialchars(addslashes($reminder['patient_name'])); ?>', '<?php echo htmlspecialchars(addslashes($reminder['message'])); ?>')">
-                <strong><?php echo htmlspecialchars($reminder['patient_name']); ?></strong><br>
-                <small><?php echo date("M d, Y g:i A", strtotime($reminder['created_at'])); ?></small>
-            </div>
-        <?php endforeach; ?>
-    <?php else: ?>
-        <div class="no-reminders">No new reminders</div>
-    <?php endif; ?>
-</div>
-
-<!-- Modal for private view -->
-<div class="modal" id="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">×</span>
-        <h3 id="modal-patient-name"></h3>
-        <p id="modal-message"></p>
+    <h3>🔔 Notifications</h3>
+    <div class="bell">
+        <?php if ($unreadCount > 0): ?>
+            <span class="count"><?= $unreadCount ?></span>
+        <?php endif; ?>
     </div>
 </div>
 
-<script>
-    function togglePopup() {
-        const popup = document.getElementById('notification-popup');
-        popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
-    }
+<div class="container">
+    <h2>Your Medication & Health Reminders</h2>
 
-    function openModal(id, name, message) {
-        document.getElementById('modal-patient-name').innerText = name;
-        document.getElementById('modal-message').innerText = message;
-        document.getElementById('modal').style.display = 'flex';
-        togglePopup();
+    <div class="controls">
+        <form method="GET" style="margin-bottom: 10px;">
+            <input type="text" name="search" placeholder="Search by keyword..." value="<?= htmlspecialchars($filterKeyword) ?>">
+            <input type="date" name="date" value="<?= htmlspecialchars($filterDate) ?>">
+            <button type="submit">Filter</button>
+        </form>
+    </div>
 
-        // Send AJAX to mark as read
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", "mark_as_read.php?id=" + id, true);
-        xhr.send();
-    }
+    <?php if (count($reminders) > 0): ?>
+        <?php foreach ($reminders as $r): ?>
+            <?php
+                $type = $r['type'] ?? 'general';
+                $emoji = '🔔'; $bgColor = '#fff3cd';
+                if ($type === 'medication') { $emoji = '💊'; $bgColor = '#d1e7dd'; }
+                elseif ($type === 'appointment') { $emoji = '📅'; $bgColor = '#cff4fc'; }
+            ?>
+            <div class="reminder" style="background: <?= $bgColor ?>;">
+                <form method="POST" action="delete_reminder.php" style="display:inline;">
+                    <input type="hidden" name="id" value="<?= $r['id'] ?>">
+                    <button type="submit" class="delete-btn">Delete</button>
+                </form>
+                <p><strong><?= $emoji ?> [<?= ucfirst($type) ?>]</strong> <?= htmlspecialchars($r['message']) ?></p>
+                <div class="timestamp"><?= date("F j, Y, g:i a", strtotime($r['created_at'])) ?></div>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p class="none">You have no reminders at the moment.</p>
+    <?php endif; ?>
 
-    function closeModal() {
-        document.getElementById('modal').style.display = 'none';
-    }
-
-    // Hide popup when clicking outside
-    window.onclick = function(e) {
-        const popup = document.getElementById('notification-popup');
-        const icon = document.getElementById('notification-icon');
-        const modal = document.getElementById('modal');
-        if (!popup.contains(e.target) && e.target !== icon && e.target.parentNode !== icon) {
-            popup.style.display = 'none';
-        }
-
-        if (e.target === modal) {
-            closeModal();
-        }
-    }
-</script>
+    <div class="preferences">
+        <h4>Notification Preferences</h4>
+        <form method="post" action="update_preferences.php">
+            <label><input type="checkbox" name="pref_types[]" value="medication" <?= $preferences['medication'] ? 'checked' : '' ?>> Medication reminders</label><br>
+            <label><input type="checkbox" name="pref_types[]" value="appointment" <?= $preferences['appointment'] ? 'checked' : '' ?>> Appointment updates</label><br>
+            <label><input type="checkbox" name="pref_types[]" value="general" <?= $preferences['general'] ? 'checked' : '' ?>> General alerts</label><br>
+            <button type="submit" style="margin-top: 10px;">Save Preferences</button>
+        </form>
+    </div>
+</div>
 
 </body>
 </html>
